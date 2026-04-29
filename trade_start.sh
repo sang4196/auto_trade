@@ -1,3 +1,3 @@
 #!/bin/bash
 
-nohup python main.py &
+nohup python trade_main.py &
