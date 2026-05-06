@@ -1,6 +1,9 @@
 import json
 from abc import *
 from pathlib import Path
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
+
 
 from common.logging.app_logging import setup_logging, get_logger, set_log_context
 
@@ -8,9 +11,10 @@ class AutoTrade(metaclass=ABCMeta):
     def __init__(self, platform: str):
         self.platform: str = platform
 
-        config = self.read_config()
-        self.access_key: str = config["access_key"]
-        self.secret_key: str = config["secret_key"]
+        self.config = self.read_config()
+        self.access_key: str = self.config["access_key"]
+        self.secret_key: str = self.config["secret_key"]
+        self.algorythm: str = self.config["algorythm"]
 
         self.logger = self.get_logger()
 
@@ -26,6 +30,22 @@ class AutoTrade(metaclass=ABCMeta):
 
     def read_config(self):
         return json.load(Path(f"config/{self.platform}.json").open())
+
+    def is_start(self, is_regular: bool = True):
+        now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
+        ny = now_kst.astimezone(ZoneInfo("America/New_York"))
+        if is_regular:
+            if ny.weekday() >= 5:  # Sat/Sun
+                return False
+        return time(9, 30) <= ny.timetz() < time(16, 0)
+
+    @abstractmethod
+    def get_cut_losses(self, high, low):
+        pass
+
+    @abstractmethod
+    def get_lock_gains(self, high, low):
+        pass
 
     @abstractmethod
     def get_tickers(self):
@@ -60,7 +80,11 @@ class AutoTrade(metaclass=ABCMeta):
 
     # order API
     @abstractmethod
-    def create_order(self, ticker: str, side: str, price: int, qty: int):
+    def buy(self, ticker: str, side: str, price: int, qty: int):
+        pass
+
+    @abstractmethod
+    def sell(self, ticker: str, side: str, price: int, qty: int):
         pass
 
     @abstractmethod
