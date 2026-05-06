@@ -2,16 +2,30 @@ import json
 from abc import *
 from pathlib import Path
 
+from common.logging.app_logging import setup_logging, get_logger, set_log_context
+
 class AutoTrade(metaclass=ABCMeta):
-    def __init__(self, trade_type: str):
-        self.trade_type: str = trade_type
+    def __init__(self, platform: str):
+        self.platform: str = platform
 
         config = self.read_config()
         self.access_key: str = config["access_key"]
         self.secret_key: str = config["secret_key"]
 
+        self.logger = self.get_logger()
+
+    def get_logger(self):
+        setup_logging(
+            level="INFO",
+            app_name="autoTrade",
+            log_format="console",
+        )
+        set_log_context(job_id=self.platform)
+
+        return get_logger(__name__)
+
     def read_config(self):
-        return json.load(Path(f"config/{self.trade_type}.json").open())
+        return json.load(Path(f"config/{self.platform}.json").open())
 
     @abstractmethod
     def get_tickers(self):

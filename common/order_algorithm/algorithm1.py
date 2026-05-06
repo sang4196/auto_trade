@@ -1,6 +1,7 @@
 
 from common.auto_trade import AutoTrade
 
-class OrderAlgorithm:
+
+class Algorithm1:
     def __init__(self, object: AutoTrade):
         pass

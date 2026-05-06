@@ -203,7 +203,7 @@ def setup_logging(
 
     console_formatter = {
         "format": (
-            "%(asctime)s | %(levelname)-8s | %(name)s | "
+            "%(asctime)s | %(process)d | %(levelname)-8s | %(name)s | "
             "%(filename)s:%(lineno)d | %(message)s"
         ),
         "datefmt": "%Y-%m-%d %H:%M:%S",
