@@ -13,6 +13,7 @@ class Algorithm1:
 
     def run(self):
         while True:
+            # 하루 한번만 거래
             if self.last_trade_time.date() <= datetime.now().date() and self.o.is_start():
                 self.last_trade_time = datetime.now()
                 self.logger.info(f"{self.o.platform} Algorithm1 거래 시작.")

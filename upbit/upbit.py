@@ -20,6 +20,12 @@ class Upbit(AutoTrade):
     def get_current_price(self, ticker: str):
         pass
 
+    def buy(self, ticker: str, side: str, price: int, qty: int):
+        pass
+
+    def sell(self, ticker: str, side: str, price: int, qty: int):
+        pass
+
     def get_candle(self, type: str, interval: int):
         pass
 

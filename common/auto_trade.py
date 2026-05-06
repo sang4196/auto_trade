@@ -37,7 +37,7 @@ class AutoTrade(metaclass=ABCMeta):
         if is_regular:
             if ny.weekday() >= 5:  # Sat/Sun
                 return False
-        return time(9, 30) <= ny.timetz() < time(16, 0)
+        return time(9, 40) <= ny.timetz() < time(16, 0)
 
     @abstractmethod
     def get_cut_losses(self, high, low):

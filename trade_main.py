@@ -1,7 +1,6 @@
 import argparse
 import sys
 
-import upbit.upbit
 from common.registry.registry import class_registry
 
 TRADE_PLATFORM = {

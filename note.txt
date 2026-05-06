@@ -1,0 +1,79 @@
+client = Upbit()
+############# 캔들
+result = client.candles.list_minutes(
+    5,
+    market="KRW-BTC",
+    count=2
+)
+# <class 'list'>
+print(type(result))
+# [Candle(candle_acc_trade_price='1477658432.13421000', candle_acc_trade_volume='12.24443533', candle_date_time_kst='2026-05-06T20:40:00', candle_date_time_utc='2026-05-06T11:40:00', high_price='120801000.00000000', low_price='120543000.00000000', market='KRW-BTC', opening_price='120799000.00000000', timestamp=1778067759412, trade_price='120544000.00000000', unit=5), Candle(candle_acc_trade_price='689675778.71040000', candle_acc_trade_volume='5.70995779', candle_date_time_kst='2026-05-06T20:35:00', candle_date_time_utc='2026-05-06T11:35:00', high_price='120803000.00000000', low_price='120736000.00000000', market='KRW-BTC', opening_price='120765000.00000000', timestamp=1778067599534, trade_price='120799000.00000000', unit=5)]
+print(result)
+
+# <class 'upbit.types.candle.Candle'>
+print(type(result[0]))
+# Candle(candle_acc_trade_price='1477658432.13421000', candle_acc_trade_volume='12.24443533', candle_date_time_kst='2026-05-06T20:40:00', candle_date_time_utc='2026-05-06T11:40:00', high_price='120801000.00000000', low_price='120543000.00000000', market='KRW-BTC', opening_price='120799000.00000000', timestamp=1778067759412, trade_price='120544000.00000000', unit=5)
+print(result[0])
+
+# <class 'str'>
+print(type(result[0].candle_date_time_kst))
+# 2026-05-06T20:40:00
+print(result[0].candle_date_time_kst)
+
+
+############# 잔고
+result = client.accounts.list()
+# <class 'list'>
+print(type(result))
+# [AccountListResponseItem(avg_buy_price='0', avg_buy_price_modified=True, balance='36465.95804906', currency='KRW', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='416', avg_buy_price_modified=False, balance='4', currency='XEM', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='1615', avg_buy_price_modified=False, balance='0.05994733', currency='BAT', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='0', avg_buy_price_modified=False, balance='2.02282623', currency='VTHO', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='0.79255079', avg_buy_price_modified=False, balance='0.00000047', currency='LUNC', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='116.83062905', avg_buy_price_modified=False, balance='6461.17543465', currency='ITAM', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='41633.92977721', avg_buy_price_modified=False, balance='0.00864093', currency='LINK', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='1640.00000132', avg_buy_price_modified=False, balance='0.00000012', currency='ALGO', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='0', avg_buy_price_modified=False, balance='204494.27361924', currency='APENFT', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='0.05022', avg_buy_price_modified=False, balance='198984.4683393', currency='SHIB', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='0', avg_buy_price_modified=False, balance='0.005', currency='ETHW', locked='0', unit_currency='KRW'), AccountListResponseItem(avg_buy_price='0', avg_buy_price_modified=False, balance='0.005', currency='ETHF', locked='0', unit_currency='KRW')]
+print(result)
+# <class 'upbit.types.account_list_response.AccountListResponseItem'>
+print(type(result[0]))
+# AccountListResponseItem(avg_buy_price='0', avg_buy_price_modified=True, balance='36465.95804906', currency='KRW', locked='0', unit_currency='KRW')
+print(result[0])
+krw = 0
+for account in result:
+    if account.currency == "KRW":
+       krw = int(float(account.balance))
+# 거래수수료 제외
+krw = krw - (krw* 0.0005)
+krw = math.floor(krw)
+
+
+############# 호가
+############# ask 매도, bid 매수
+result = client.orderbooks.list(
+    markets="KRW-BTC",
+)
+# <class 'upbit.types.orderbook_list_response.OrderbookListResponseItem'>
+print(type(result[0]))
+# OrderbookListResponseItem(level='0', market='KRW-BTC', orderbook_units=[OrderbookListResponseItemOrderbookUnit(ask_price='120520000', ask_size='1.22058427', bid_price='120507000', bid_size='0.00145460'), OrderbookListResponseItemOrderbookUnit(ask_price='120527000', ask_size='0.00034020', bid_price='120483000', bid_size='0.01658742'), OrderbookListResponseItemOrderbookUnit(ask_price='120529000', ask_size='0.03077389', bid_price='120482000', bid_size='0.42029274'), OrderbookListResponseItemOrderbookUnit(ask_price='120535000', ask_size='0.0762', bid_price='120481000', bid_size='0.20724777'), OrderbookListResponseItemOrderbookUnit(ask_price='120540000', ask_size='0.00082926', bid_price='120480000', bid_size='0.56098616'), OrderbookListResponseItemOrderbookUnit(ask_price='120542000', ask_size='0.11766', bid_price='120479000', bid_size='0.01477297'), OrderbookListResponseItemOrderbookUnit(ask_price='120545000', ask_size='0.07722', bid_price='120474000', bid_size='0.01099869'), OrderbookListResponseItemOrderbookUnit(ask_price='120549000', ask_size='0.00058066', bid_price='120473000', bid_size='0.02186464'), OrderbookListResponseItemOrderbookUnit(ask_price='120550000', ask_size='3.39800096', bid_price='120470000', bid_size='0.00176016'), OrderbookListResponseItemOrderbookUnit(ask_price='120551000', ask_size='0.05514', bid_price='120469000', bid_size='0.00091764'), OrderbookListResponseItemOrderbookUnit(ask_price='120553000', ask_size='0.07584', bid_price='120466000', bid_size='0.00165964'), OrderbookListResponseItemOrderbookUnit(ask_price='120560000', ask_size='0.00082926', bid_price='120465000', bid_size='0.00166022'), OrderbookListResponseItemOrderbookUnit(ask_price='120563000', ask_size='0.12029', bid_price='120464000', bid_size='0.00647319'), OrderbookListResponseItemOrderbookUnit(ask_price='120564000', ask_size='0.07458672', bid_price='120460000', bid_size='0.00435075'), OrderbookListResponseItemOrderbookUnit(ask_price='120568000', ask_size='0.05106', bid_price='120458000', bid_size='0.00124525'), OrderbookListResponseItemOrderbookUnit(ask_price='120569000', ask_size='0.11622', bid_price='120457000', bid_size='0.00921489'), OrderbookListResponseItemOrderbookUnit(ask_price='120570000', ask_size='0.05470926', bid_price='120456000', bid_size='0.00872419'), OrderbookListResponseItemOrderbookUnit(ask_price='120572000', ask_size='0.10740', bid_price='120455000', bid_size='0.08297707'), OrderbookListResponseItemOrderbookUnit(ask_price='120573000', ask_size='0.03660000', bid_price='120451000', bid_size='0.00396225'), OrderbookListResponseItemOrderbookUnit(ask_price='120575000', ask_size='0.05352', bid_price='120450000', bid_size='0.04569067'), OrderbookListResponseItemOrderbookUnit(ask_price='120576000', ask_size='0.05196', bid_price='120444000', bid_size='0.00821603'), OrderbookListResponseItemOrderbookUnit(ask_price='120580000', ask_size='0.20082926', bid_price='120443000', bid_size='0.00083027'), OrderbookListResponseItemOrderbookUnit(ask_price='120582000', ask_size='0.11898', bid_price='120440000', bid_size='0.00024153'), OrderbookListResponseItemOrderbookUnit(ask_price='120583000', ask_size='0.0582000', bid_price='120436000', bid_size='0.02075790'), OrderbookListResponseItemOrderbookUnit(ask_price='120586000', ask_size='0.02000', bid_price='120433000', bid_size='0.01186978'), OrderbookListResponseItemOrderbookUnit(ask_price='120588000', ask_size='0.0366', bid_price='120432000', bid_size='0.10257372'), OrderbookListResponseItemOrderbookUnit(ask_price='120589000', ask_size='0.555', bid_price='120431000', bid_size='0.00024884'), OrderbookListResponseItemOrderbookUnit(ask_price='120590000', ask_size='0.00082926', bid_price='120430000', bid_size='0.00370623'), OrderbookListResponseItemOrderbookUnit(ask_price='120592000', ask_size='0.50978', bid_price='120429000', bid_size='0.00548839'), OrderbookListResponseItemOrderbookUnit(ask_price='120594000', ask_size='0.04914000', bid_price='120425000', bid_size='0.01645587')], timestamp=1778068994715, total_ask_size='7.26970300', total_bid_size='1.59322947')
+print(result[0])
+# <class 'upbit.types.orderbook_list_response.OrderbookListResponseItemOrderbookUnit'>
+print(type(result[0].orderbook_units[0]))
+# OrderbookListResponseItemOrderbookUnit(ask_price='120500000', ask_size='0.64804223', bid_price='120482000', bid_size='0.23260390')
+print(result[0].orderbook_units[0])
+
+
+############# 현재가
+result = client.trades.list(
+    market="KRW-BTC",
+)
+# <class 'upbit.types.trade_list_response.TradeListResponseItem'>
+print(type(result[0]))
+# TradeListResponseItem(ask_bid='ASK', change_price='696000.00000000', market='KRW-BTC', prev_closing_price='119724000.00000000', sequential_id=17780695580060000, timestamp=1778069558006, trade_date_utc='2026-05-06', trade_price='120420000.00000000', trade_time_utc='12:12:38', trade_volume='0.00087549')
+print(result[0])
+
+
+############# 시장가 주문
+result = client.orders.create(
+    market="KRW-BTC",
+    side="bid",
+    price=str(krw),
+    ord_type="price",
+)
+# <class 'upbit.types.order.Order'>
+print(type(result))
+# Order(created_at='2026-05-06T21:32:53+09:00', executed_volume='0', locked='36464.223', market='KRW-BTC', ord_type='price', paid_fee='0', prevented_locked='0', prevented_volume=None, remaining_fee='18.223', remaining_volume=None, reserved_fee='18.223', side='bid', state='wait', trades_count=0, uuid='414f8c7a-2739-4495-aec9-c6ff19829891', identifier=None, price='36446', smp_type=None, time_in_force=None, trades=None, volume=None)
+print(result)
+print(result.uuid)
