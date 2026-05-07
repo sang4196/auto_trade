@@ -1,10 +1,10 @@
 import time
-from typing import Union, Literal
+from typing import Literal, Optional
 from datetime import datetime
+from datetime import time as TimeClass
+from zoneinfo import ZoneInfo
 
-from pip._internal.utils import datetime
-
-from upbit import Upbit
+from client import Upbit
 from common.registry.registry import register
 from common.auto_trade import AutoTrade
 
@@ -12,11 +12,22 @@ PLATFORM = "upbit"
 
 @register(PLATFORM)
 class UpbitClient(AutoTrade):
-    def __init__(self):
-        super().__init__(PLATFORM)
+    def __init__(self, algorythm_no:int):
+        super().__init__(PLATFORM, algorythm_no)
 
         self.client = Upbit(self.access_key, self.secret_key)
-        self.item = self.config["item"]
+        self.ticker = self.algorythm["ticker"]
+        print(self.algorythm)
+        print(self.ticker)
+
+    def is_start(self, is_regular: bool = True):
+        now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
+        ny = now_kst.astimezone(ZoneInfo("America/New_York"))
+        if is_regular:
+            if ny.weekday() >= 5:  # Sat/Sun
+                return False
+        # shlee todo 시간 설정 수정
+        return TimeClass(9, 40) <= ny.timetz() < TimeClass(16, 0)
 
     ############# abstractmethod #############
     def get_cut_losses(self, high, low):
@@ -28,7 +39,7 @@ class UpbitClient(AutoTrade):
     def _get_tickers(self):
         pass
 
-    def _get_current_price(self) -> Union[str, None]:
+    def _get_current_price(self) -> Optional[str]:
         rtn = None
         result = self.client.trades.list(
             market=self.item,
@@ -37,12 +48,12 @@ class UpbitClient(AutoTrade):
             rtn = result[0].trade_price
         return rtn
 
-    def _get_candle(self, item: str, type: str, count:int, unit: Literal[1, 3, 5, 10, 15, 30, 60, 240] = 1):
+    def _get_candle(self, ticker: str, type: str, count:int, unit: int = 1):
         result = None
         if type == "m":
             result = self.client.candles.list_minutes(
                 unit,
-                market=item,
+                market=ticker,
                 count=count
             )
             return result
@@ -64,7 +75,7 @@ class UpbitClient(AutoTrade):
     def _buy_price(self, balance: str):
         rtn = None
         result = self.client.orders.create(
-            market=self.item,
+            market=self.ticker,
             side="bid",
             price=balance,
             ord_type="price",
@@ -83,7 +94,7 @@ class UpbitClient(AutoTrade):
         pass
     ########################################
 
-    def get_price_levels_by_minute(self, type: str, unit: int, minutes: int) -> Union[list, None]:
+    def get_price_levels_by_minute(self, type: str, unit: int, minutes: int) -> Optional[list]:
         """
         Fetches price levels (high and low) for a specific minute from a candle chart.
 

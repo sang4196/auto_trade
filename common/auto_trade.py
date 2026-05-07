@@ -1,23 +1,23 @@
 import json
 from abc import *
 from pathlib import Path
-from datetime import datetime, time
-from typing import Union
-from zoneinfo import ZoneInfo
+from typing import Optional
 
 
 from common.logging.app_logging import setup_logging, get_logger, set_log_context
 
 class AutoTrade(metaclass=ABCMeta):
-    def __init__(self, platform: str):
+    def __init__(self, platform: str, algorythm_no:int):
         self.platform: str = platform
         self.client = None
+        self.algo_no = algorythm_no
 
-        self.config = self.read_config()
-        self.access_key: str = self.config["access_key"]
-        self.secret_key: str = self.config["secret_key"]
-        self.algorythm: str = self.config["algorythm"]
+        self.config: Optional[dict] = None
+        self.access_key: Optional[str] = None
+        self.secret_key: Optional[str] = None
+        self.algorythm: Optional[dict] = None
 
+        self.load_config()
         self.logger = self.get_logger()
 
     def get_logger(self):
@@ -30,16 +30,13 @@ class AutoTrade(metaclass=ABCMeta):
 
         return get_logger(__name__)
 
-    def read_config(self):
-        return json.load(Path(f"config/{self.platform}.json").open())
+    def load_config(self):
+        self.config = json.load(Path(f"config/{self.platform}.json").open())
+        self.algorythm: dict = self.config["algorythm"][self.algo_no]
 
+    @abstractmethod
     def is_start(self, is_regular: bool = True):
-        now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
-        ny = now_kst.astimezone(ZoneInfo("America/New_York"))
-        if is_regular:
-            if ny.weekday() >= 5:  # Sat/Sun
-                return False
-        return time(9, 40) <= ny.timetz() < time(16, 0)
+        pass
 
     @abstractmethod
     def get_cut_losses(self, high, low):
@@ -58,9 +55,9 @@ class AutoTrade(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _get_candle(self, item:str, type: str, count:int, unit: int = 0):
+    def _get_candle(self, ticker:str, type: str, count:int, unit: int = 0):
         """
-        item = pair or event
+        ticker = pair or ticker
         1분봉
         ex) type = "m", unit = 1,3,5..
         일봉
@@ -73,7 +70,7 @@ class AutoTrade(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_price_levels_by_minute(self, type: str, unit: int, minutes: int) -> Union[list, None]:
+    def get_price_levels_by_minute(self, type: str, unit: int, minutes: int) -> Optional[list]:
         pass
 
     ###########################################

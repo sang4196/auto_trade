@@ -1,7 +1,25 @@
+import json
 import time
 from datetime import datetime, timedelta
+from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Any
 
 from common.auto_trade import AutoTrade
+
+@dataclass
+class Algo1_info:
+
+    ticker: str
+    time_usa: str
+    time_korea: str
+    candle_count: int
+    candle_unit: int
+
+    @classmethod
+    def from_json(cls, filepath: Path) -> "Algo1_info":
+        data: dict[str, Any] = json.loads(filepath.read_text(encoding='utf-8'))
+        return cls(**data)
 
 class Algorithm1:
     def __init__(self, object: AutoTrade):
@@ -10,6 +28,7 @@ class Algorithm1:
         self.last_trade_time = datetime.now() + timedelta(days=-1)
         self.win = 0
         self.lose = 0
+        self.total_profit = 0
 
         # price levels
         self.high_price = 0
@@ -22,9 +41,19 @@ class Algorithm1:
             # 하루 한번만 거래
             if self.last_trade_time.date() <= datetime.now().date() and self.o.is_start():
                 self.last_trade_time = datetime.now()
+                start_balance = self.o._get_balance("KRW")
+
                 self.logger.info(f"{self.o.platform} Algorithm1 거래 시작.")
+                self.logger.info(f"시작 잔고: {start_balance}")
                 self.trade()
                 self.logger.info(f"{self.o.platform} Algorithm1 거래 종료.")
+
+                end_balance = self.o._get_balance("KRW")
+                self.logger.info(f"종료 잔고: {end_balance}")
+                self.logger.info(f"수익: {end_balance - start_balance}")
+                self.total_profit += end_balance - start_balance
+                self.logger.info(f"총 수익: {self.total_profit}")
+
                 win_rate = 0
                 if self.win != 0 or self.lose != 0:
                     win_rate = self.win / (self.win + self.lose) * 100
