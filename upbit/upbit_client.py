@@ -83,18 +83,41 @@ class UpbitClient(AutoTrade):
         pass
     ########################################
 
-    def get_price_levels_by_minute(
-            self, type: str, count:int, unit: int, minutes: int) -> Union[list, None]:
+    def get_price_levels_by_minute(self, type: str, unit: int, minutes: int) -> Union[list, None]:
+        """
+        Fetches price levels (high and low) for a specific minute from a candle chart.
+
+        This method retrieves the high and low prices from the most recently completed
+        candle chart for a specific minute. If the targeted minute is not found in the
+        chart data, the method retries until the maximum retry limit (based on the unit)
+        is reached.
+
+        Parameters:
+        type: str
+            The type of the candle chart to retrieve, such as "minute" or "day".
+        unit: int
+            The time unit of the candles (e.g., 1-minute candles, 5-minute candles, etc.).
+        minutes: int
+            The minute value to target within the candle data.
+
+        Returns:
+        list or None
+            A list containing the high price and low price of the targeted minute if found.
+            Otherwise, returns None if the retry limit is exceeded.
+        """
         retry_cnt = 0
         while True:
-            if retry_cnt > 3:
+            # 해당 분봉 만큼 retry
+            # ex) unit = 5. 5분봉 최대 retry횟수 5.
+            if retry_cnt > unit:
                 return None
-            candle = self._get_candle(self.item, type, count, unit)
+            candle = self._get_candle(self.item, type, 2, unit)
             # 캔들이 완성된 걸 가져옴.
             # 인덱스0 - 캔들 생성중, 1 - 완성된 캔들의 최신
             target = candle[1]
             if datetime.fromisoformat(target.candle_date_time_kst).minute != minutes:
-                time.sleep(1)
+                # retry interval 60sec
+                time.sleep(60)
                 continue
 
             return [target.high_price, target.low_price]

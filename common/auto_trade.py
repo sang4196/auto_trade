@@ -73,8 +73,7 @@ class AutoTrade(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_price_levels_by_minute(
-            self, type: str, count: int, unit: int, minutes: int) -> Union[list, None]:
+    def get_price_levels_by_minute(self, type: str, unit: int, minutes: int) -> Union[list, None]:
         pass
 
     ###########################################
