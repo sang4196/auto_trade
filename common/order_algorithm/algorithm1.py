@@ -11,6 +11,12 @@ class Algorithm1:
         self.win = 0
         self.lose = 0
 
+        # price levels
+        self.high_price = 0
+        self.low_price = 0
+        self.cut_losses = 0
+        self.take_profit = 0
+
     def run(self):
         while True:
             # 하루 한번만 거래
@@ -27,43 +33,55 @@ class Algorithm1:
             time.sleep(60)
 
     def trade(self):
-        high_price = 120
-        low_price = 100
-        cut_losses = self.o.get_cut_losses(high_price, low_price)
-        lock_gains = self.o.get_lock_gains(high_price, low_price)
-        self.logger.info(f"high_price: {high_price}, low_price: {low_price}")
-        self.logger.info(f"cut_losses: {cut_losses}, lock_gains: {lock_gains}")
+        # 가격 세팅
+        price_levels = self.o.get_price_levels_by_minute("m", count=2, unit=5, minutes=35)
+        if not price_levels:
+            self.logger.info("가격 세팅 실패. 거래 종료.")
+            return
+        self.high_price = price_levels[0]
+        self.low_price = price_levels[1]
+        self.cut_losses = self.o.get_cut_losses(self.high_price, self.low_price)
+        self.take_profit = self.o.get_lock_gains(self.high_price, self.low_price)
+        self.logger.info(f"high_price: {self.high_price}, low_price: {self.low_price}")
+        self.logger.info(f"cut_losses: {self.cut_losses}, take_profit: {self.take_profit}")
 
         # 매수시점 조회
-        current_price = self._poll_price_until_high(high_price)
+        current_price = self._poll_price_until_high(self.high_price)
         if current_price == -1:
             self.logger.info("매수시점 조회 실패. 거래 종료.")
             return
         self.logger.info(f"매수시점 가격: {current_price}")
 
-        # 매수 요청
-        order_id = self.o.buy(current_price)
-        self.logger.info(f"매수요청({order_id}): {current_price}")
+        # 잔고조회
+        balance = self.o._get_balance("KRW")
+
+        # 수수료 조회
+        # shlee todo
+
+        available_balance = balance
+        self.logger.info(f"잔고(KRW): {balance} -> {available_balance}")
+
+        # 시장가 매수 요청
+        order_uuid = self.o._buy_price(str(available_balance))
+        self.logger.info(f"매수요청 - {order_uuid}")
 
         # 매수 확인
-        if not self._ensure_buy_or_retry(order_id):
+        if not self._ensure_buy_or_retry(order_uuid):
             return
 
-        # 매도
-        order_id = self._sell_on_threshold(lock_gains, cut_losses)
+        # 시장가 매도
+        order_id = self._sell_on_threshold()
         self.logger.info(f"매도요청({order_id}): {current_price}")
 
     def _poll_price_until_high(self, high: float) -> float:
         """
         현재 가격이 최고가에 도달할 때까지 조회
         """
-        # todo 현재가 조회
-        current_price = 120
+        current_price = self.o._get_current_price()
         cnt = 0
         while current_price < high:
             time.sleep(1)
-            # todo 현재가 조회
-            current_price = 120
+            current_price = self.o._get_current_price()
 
             cnt += 1
             # 300번에 한번씩 로깅
@@ -76,21 +94,21 @@ class Algorithm1:
                 return -1
         return current_price
 
-    def _sell_on_threshold(self, high: float, low: float) -> None:
+    def _sell_on_threshold(self) -> None:
         """
-        현재가가 high보다 위로 가거나
-        현재가가 low보다 아래로 가면 매도
+        현재가가 self.take_profit 보다 위로 가거나
+        현재가가 self.cut_losses보다 아래로 가면 매도
         """
+        # shlee todo
         while True:
-            # todo 현재가 조회
-            current_price = 120
+            current_price = self.o._get_current_price()
 
-            if current_price >= high:
-                self.o.sell(current_price)
+            if current_price >= self.take_profit:
+                self.o._sell_price(current_price)
                 self.win += 1
                 break
-            elif current_price <= low:
-                self.o.sell(current_price)
+            elif current_price <= self.cut_losses:
+                self.o._sell_price(current_price)
                 self.lose += 1
                 break
 
@@ -99,6 +117,8 @@ class Algorithm1:
         매수요청 확인.
         매수가 되지 않는다면 취소하고 다시 요청.
         """
+        # shlee todo
+        # 체결되었는지 확인. 체결되었다면 단가 및 수량 확인?
         retry_cnt = 0
         while True:
             retry_cnt += 1

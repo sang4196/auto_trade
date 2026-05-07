@@ -2,6 +2,7 @@ import json
 from abc import *
 from pathlib import Path
 from datetime import datetime, time
+from typing import Union
 from zoneinfo import ZoneInfo
 
 
@@ -10,6 +11,7 @@ from common.logging.app_logging import setup_logging, get_logger, set_log_contex
 class AutoTrade(metaclass=ABCMeta):
     def __init__(self, platform: str):
         self.platform: str = platform
+        self.client = None
 
         self.config = self.read_config()
         self.access_key: str = self.config["access_key"]
@@ -48,25 +50,31 @@ class AutoTrade(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_tickers(self):
+    def _get_tickers(self):
         pass
 
     @abstractmethod
-    def get_current_price(self, ticker: str):
+    def _get_current_price(self):
         pass
 
     @abstractmethod
-    def get_candle(self, type: str, interval: int):
+    def _get_candle(self, item:str, type: str, count:int, unit: int = 0):
         """
+        item = pair or event
         1분봉
-        ex) type = "m", interval = 1
+        ex) type = "m", unit = 1,3,5..
         일봉
-        ex) type = "d", interval = 100(카운트)
+        ex) type = "d"
         주봉
-        ex) type = "w", interval = 100(카운트)
+        ex) type = "w"
         월봉
-        ex) type = "M", interval = 100(카운트)
+        ex) type = "M"
         """
+        pass
+
+    @abstractmethod
+    def get_price_levels_by_minute(
+            self, type: str, count: int, unit: int, minutes: int) -> Union[list, None]:
         pass
 
     ###########################################
@@ -75,18 +83,32 @@ class AutoTrade(metaclass=ABCMeta):
 
     # wallet API
     @abstractmethod
-    def get_balance(self):
+    def _get_balance(self, currency: str):
         pass
 
     # order API
     @abstractmethod
-    def buy(self, ticker: str, side: str, price: int, qty: int):
+    def _buy_limit(self, ticker: str, side: str, price: int, qty: int):
         pass
 
     @abstractmethod
-    def sell(self, ticker: str, side: str, price: int, qty: int):
+    def _buy_price(self, price: str):
+        """
+        시장가
+        """
         pass
 
     @abstractmethod
-    def cancel_order(self, order_id: str):
+    def _sell_limit(self, ticker: str, side: str, price: int, qty: int):
+        pass
+
+    @abstractmethod
+    def _sell_price(self, ticker: str, side: str, price: int, qty: int):
+        """
+        시장가
+        """
+        pass
+
+    @abstractmethod
+    def _cancel_order(self, order_id: str):
         pass
