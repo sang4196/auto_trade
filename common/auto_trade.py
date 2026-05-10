@@ -20,10 +20,12 @@ class AutoTrade(metaclass=ABCMeta):
         self.load_config()
         self.logger = self.get_logger()
 
+        self.logger.info(f"AutoTrade init {self.platform} {self.algo_no} succeed.")
+
     def get_logger(self):
         setup_logging(
             level="INFO",
-            app_name="autoTrade",
+            app_name=f"autoTrade_{self.platform}_{self.algo_no}",
             log_format="console",
         )
         set_log_context(job_id=self.platform)
@@ -33,6 +35,8 @@ class AutoTrade(metaclass=ABCMeta):
     def load_config(self):
         self.config = json.load(Path(f"config/{self.platform}.json").open())
         self.algorythm: dict = self.config["algorythm"][self.algo_no]
+        self.access_key = self.config["access_key"]
+        self.secret_key = self.config["secret_key"]
 
     @abstractmethod
     def start_trade(self):
@@ -103,7 +107,7 @@ class AutoTrade(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _sell_price(self, ticker: str, side: str, price: int, qty: int):
+    def _sell_price(self, price: str):
         """
         시장가
         """

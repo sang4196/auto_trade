@@ -63,7 +63,8 @@ class Algorithm1:
 
     def trade(self):
         # 가격 세팅
-        price_levels = self.o.get_price_levels_by_minute("m", count=2, unit=5, minutes=35)
+        # shlee 시간설정
+        price_levels = self.o.get_price_levels_by_minute("m", unit=5, minutes=35)
         if not price_levels:
             self.logger.info("가격 세팅 실패. 거래 종료.")
             return
@@ -90,17 +91,27 @@ class Algorithm1:
         available_balance = balance
         self.logger.info(f"잔고(KRW): {balance} -> {available_balance}")
 
-        # 시장가 매수 요청
-        order_uuid = self.o._buy_price(str(available_balance))
-        self.logger.info(f"매수요청 - {order_uuid}")
-
-        # 매수 확인
-        if not self._ensure_buy_or_retry(order_uuid):
+        if available_balance < 5000:
+            self.logger.info("잔액 부족. 거래 종료.")
             return
 
+        # 시장가 매수 요청
+        bid_uuid = self.o._buy_price(str(available_balance))
+        self.logger.info(f"매수요청 - {bid_uuid}")
+
+        # shlee todo 여기서 실제 평단가를 가져오면 좋을듯
+
+        # 매수 확인
+        # if not self._ensure_buy_or_retry(bid_uuid):
+        #     return
+
+        # 잔고조회
+        btc_balance = self.o._get_balance("BTC")
+
         # 시장가 매도
-        order_id = self._sell_on_threshold()
-        self.logger.info(f"매도요청({order_id}): {current_price}")
+        ask_uuid = self.o._sell_price(str(btc_balance))
+        self.logger.info(f"매도요청 - {ask_uuid}")
+        # shlee todo 여기서 실제 매도 금액을 가져오면 좋을듯
 
     def _poll_price_until_high(self, high: float) -> float:
         """
@@ -118,8 +129,8 @@ class Algorithm1:
                 self.logger.info(f"현재가 : {current_price}")
                 cnt = 0
 
-            # 20시간 내에 매수시점 못 잡을 시 거래 종료
-            if self.last_trade_time < datetime.now() + timedelta(hours=20):
+            # 3시간 내에 매수시점 못 잡을 시 거래 종료
+            if self.last_trade_time + timedelta(hours=3) < datetime.now():
                 return -1
         return current_price
 
