@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import time as TimeClass
 from zoneinfo import ZoneInfo
 from upbit import Upbit
+from upbit.types import ticker
 
 from common.order_algorithm.order_algorithm import OrderAlgorithm
 from common.registry.registry import register
@@ -18,24 +19,36 @@ class UpbitClient(AutoTrade):
 
         self.client = Upbit(access_key=self.access_key, secret_key=self.secret_key)
         self.ticker = self.algorythm["ticker"]
+        self.quote_currency = self.ticker.split("-")[0]
+        self.trade_currency = self.ticker.split("-")[1]
 
         self.logger.info(f"UpbitClient init {self.platform} {self.algo_no} succeed.")
         self.logger.info(f"UpbitClient ticker: {self.ticker}")
 
     def is_start(self):
-        now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
-        ny = now_kst.astimezone(ZoneInfo("America/New_York"))
-        # if ny.weekday() >= 5:  # Sat/Sun
-        #     return False
-        # shlee todo 시간 설정 수정
-        s = TimeClass(9, 40) <= ny.timetz() < TimeClass(16, 0)
-        if not s:
-            self.logger.info("waiing for trading time..")
-        return s
+        # now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
+        # ny = now_kst.astimezone(ZoneInfo("America/New_York"))
+        # # if ny.weekday() >= 5:  # Sat/Sun
+        # #     return False
+        # # shlee todo 시간 설정 수정
+        # s = TimeClass(9, 40) <= ny.timetz() < TimeClass(16, 0)
+        # if not s:
+        #     self.logger.info("waiing for trading time..")
+        # return s
+        return True
 
     def start_trade(self):
         trade = OrderAlgorithm(self, self.algorythm["algorythm_type"])
         trade.run()
+
+    def get_candle_type(self):
+        return self.algorythm["candle_type"]
+
+    def get_candle_count(self):
+        return int(self.algorythm["candle_count"])
+
+    def get_candle_unit(self):
+        return int(self.algorythm["candle_unit"])
 
     ############# abstractmethod #############
     def get_cut_losses(self, high, low):
@@ -47,7 +60,7 @@ class UpbitClient(AutoTrade):
     def _get_tickers(self):
         pass
 
-    def _get_current_price(self) -> Optional[str]:
+    def _get_current_price(self) -> Optional[float]:
         rtn = None
         result = self.client.trades.list(
             market=self.ticker,
@@ -75,6 +88,17 @@ class UpbitClient(AutoTrade):
         for account in result:
             if account.currency == currency:
                 rtn = float(account.balance)
+        return rtn
+
+    def _get_agv_price(self, currency: str):
+        rtn = 0
+        result = self.client.accounts.list()
+        if not result:
+            return rtn
+
+        for account in result:
+            if account.currency == currency:
+                rtn = float(account.avg_buy_price)
         return rtn
 
     def _buy_limit(self, ticker: str, side: str, price: int, qty: int):
@@ -111,40 +135,26 @@ class UpbitClient(AutoTrade):
         pass
     ########################################
 
-    def get_price_levels_by_minute(self, type: str, unit: int, minutes: int) -> Optional[list]:
+    def get_price_levels_by_minute(self) -> Optional[list]:
         """
-        Fetches price levels (high and low) for a specific minute from a candle chart.
-
-        This method retrieves the high and low prices from the most recently completed
-        candle chart for a specific minute. If the targeted minute is not found in the
-        chart data, the method retries until the maximum retry limit (based on the unit)
-        is reached.
-
-        Parameters:
-        type: str
-            The type of the candle chart to retrieve, such as "minute" or "day".
-        unit: int
-            The time unit of the candles (e.g., 1-minute candles, 5-minute candles, etc.).
-        minutes: int
-            The minute value to target within the candle data.
-
-        Returns:
-        list or None
-            A list containing the high price and low price of the targeted minute if found.
-            Otherwise, returns None if the retry limit is exceeded.
         """
         retry_cnt = 0
+        candle_type = self.get_candle_type()
+        candle_count = self.get_candle_count()
+        candle_unit = self.get_candle_unit()
+        target_hour = int(self.algorythm["time_korea"].split(":")[0])
+        target_min = int(self.algorythm["time_korea"].split(":")[1])
         while True:
             # 해당 분봉 만큼 retry
             # ex) unit = 5. 5분봉 최대 retry횟수 5.
-            if retry_cnt > unit:
+            if retry_cnt > candle_unit:
                 return None
-            candle = self._get_candle(self.ticker, type, 2, unit)
+            candle = self._get_candle(self.ticker, candle_type, candle_count, candle_unit)
             # 캔들이 완성된 걸 가져옴.
             # 인덱스0 - 캔들 생성중, 1 - 완성된 캔들의 최신
             target = candle[1]
-            # shlee 여기서 시간체크
-            if datetime.fromisoformat(target.candle_date_time_kst).minute != minutes:
+            if (datetime.fromisoformat(target.candle_date_time_kst).hour != target_hour and
+                    datetime.fromisoformat(target.candle_date_time_kst).minute != target_min):
                 # retry interval 60sec
                 time.sleep(60)
                 continue

@@ -17,6 +17,9 @@ class AutoTrade(metaclass=ABCMeta):
         self.secret_key: Optional[str] = None
         self.algorythm: Optional[dict] = None
 
+        self.quote_currency: str = ""
+        self.trade_currency: str = ""
+
         self.load_config()
         self.logger = self.get_logger()
 
@@ -39,27 +42,27 @@ class AutoTrade(metaclass=ABCMeta):
         self.secret_key = self.config["secret_key"]
 
     @abstractmethod
-    def start_trade(self):
+    def start_trade(self) -> None:
         pass
 
     @abstractmethod
-    def is_start(self):
+    def is_start(self) -> bool:
         pass
 
     @abstractmethod
-    def get_cut_losses(self, high, low):
+    def get_cut_losses(self, high, low) -> Optional[float]:
         pass
 
     @abstractmethod
-    def get_lock_gains(self, high, low):
+    def get_lock_gains(self, high, low) -> Optional[float]:
         pass
 
     @abstractmethod
-    def _get_tickers(self):
+    def _get_tickers(self) -> str:
         pass
 
     @abstractmethod
-    def _get_current_price(self):
+    def _get_current_price(self) -> Optional[float]:
         pass
 
     @abstractmethod
@@ -78,7 +81,7 @@ class AutoTrade(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_price_levels_by_minute(self, type: str, unit: int, minutes: int) -> Optional[list]:
+    def get_price_levels_by_minute(self) -> Optional[list]:
         pass
 
     ###########################################
@@ -88,6 +91,10 @@ class AutoTrade(metaclass=ABCMeta):
     # wallet API
     @abstractmethod
     def _get_balance(self, currency: str):
+        pass
+
+    @abstractmethod
+    def _get_agv_price(self, currency: str):
         pass
 
     # order API

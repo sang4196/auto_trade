@@ -41,14 +41,14 @@ class Algorithm1:
             # 하루 한번만 거래
             if self.last_trade_time.date() <= datetime.now().date() and self.o.is_start():
                 self.last_trade_time = datetime.now()
-                start_balance = self.o._get_balance("KRW")
+                start_balance = self.o._get_balance(self.o.quote_currency)
 
                 self.logger.info(f"{self.o.platform} Algorithm1 거래 시작.")
                 self.logger.info(f"시작 잔고: {start_balance}")
                 self.trade()
                 self.logger.info(f"{self.o.platform} Algorithm1 거래 종료.")
 
-                end_balance = self.o._get_balance("KRW")
+                end_balance = self.o._get_balance(self.o.quote_currency)
                 self.logger.info(f"종료 잔고: {end_balance}")
                 self.logger.info(f"수익: {end_balance - start_balance}")
                 self.total_profit += end_balance - start_balance
@@ -63,8 +63,7 @@ class Algorithm1:
 
     def trade(self):
         # 가격 세팅
-        # shlee 시간설정
-        price_levels = self.o.get_price_levels_by_minute("m", unit=5, minutes=35)
+        price_levels = self.o.get_price_levels_by_minute()
         if not price_levels:
             self.logger.info("가격 세팅 실패. 거래 종료.")
             return
@@ -83,13 +82,13 @@ class Algorithm1:
         self.logger.info(f"매수시점 가격: {current_price}")
 
         # 잔고조회
-        balance = self.o._get_balance("KRW")
+        balance = self.o._get_balance(self.o.quote_currency)
 
         # 수수료 조회
         # shlee todo
 
         available_balance = balance
-        self.logger.info(f"잔고(KRW): {balance} -> {available_balance}")
+        self.logger.info(f"잔고({self.o.quote_currency}): {balance} -> {available_balance}")
 
         if available_balance < 5000:
             self.logger.info("잔액 부족. 거래 종료.")
@@ -99,19 +98,22 @@ class Algorithm1:
         bid_uuid = self.o._buy_price(str(available_balance))
         self.logger.info(f"매수요청 - {bid_uuid}")
 
-        # shlee todo 여기서 실제 평단가를 가져오면 좋을듯
-
         # 매수 확인
+        # shlee todo 매수 얼마에 체결되었는지도 확인
         # if not self._ensure_buy_or_retry(bid_uuid):
         #     return
+        # shlee todo 매수 확인 후 체크하도록.
+        # agv_buy_price = self.o._get_agv_price(self.o.trade_currency)
+        agv_buy_price = 0
+        self.logger.info(f"{self.o.trade_currency} 매수 평단가: {agv_buy_price}")
 
         # 잔고조회
-        btc_balance = self.o._get_balance("BTC")
+        btc_balance = self.o._get_balance(self.o.trade_currency)
 
         # 시장가 매도
         ask_uuid = self.o._sell_price(str(btc_balance))
         self.logger.info(f"매도요청 - {ask_uuid}")
-        # shlee todo 여기서 실제 매도 금액을 가져오면 좋을듯
+        # shlee todo 여기서 실제 매도 금액을 가져오면 좋을듯. 매수확인과 같은 함수쓰면될듯
 
     def _poll_price_until_high(self, high: float) -> float:
         """
@@ -129,7 +131,8 @@ class Algorithm1:
                 self.logger.info(f"현재가 : {current_price}")
                 cnt = 0
 
-            # 3시간 내에 매수시점 못 잡을 시 거래 종료
+            # 설정된 시간내에 매수시점 못 잡을 시 거래 종료(기본 60분)
+            trade_duration_min = self.o.algorythm.get("trade_duration_min", 60)
             if self.last_trade_time + timedelta(hours=3) < datetime.now():
                 return -1
         return current_price
