@@ -1,4 +1,5 @@
 import json
+import math
 import time
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
@@ -86,9 +87,10 @@ class Algorithm1:
 
         # 수수료 조회
         # shlee todo
+        trade_fee = math.ceil(balance * 0.0005)
 
-        available_balance = balance
-        self.logger.info(f"잔고({self.o.quote_currency}): {balance} -> {available_balance}")
+        available_balance = balance - trade_fee
+        self.logger.info(f"거래가능 금액({self.o.quote_currency}): {balance} -> {available_balance}")
 
         if available_balance < 5000:
             self.logger.info("잔액 부족. 거래 종료.")
@@ -147,11 +149,11 @@ class Algorithm1:
             current_price = self.o._get_current_price()
 
             if current_price >= self.take_profit:
-                self.o._sell_price(current_price)
+                self.o._sell_price(str(current_price))
                 self.win += 1
                 break
             elif current_price <= self.cut_losses:
-                self.o._sell_price(current_price)
+                self.o._sell_price(str(current_price))
                 self.lose += 1
                 break
 

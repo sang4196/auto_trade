@@ -62,7 +62,7 @@ class AutoTrade(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _get_current_price(self) -> Optional[float]:
+    def _get_current_price(self) -> float:
         pass
 
     @abstractmethod

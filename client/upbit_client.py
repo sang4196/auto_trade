@@ -60,8 +60,8 @@ class UpbitClient(AutoTrade):
     def _get_tickers(self):
         pass
 
-    def _get_current_price(self) -> Optional[float]:
-        rtn = None
+    def _get_current_price(self) -> float:
+        rtn = 0
         result = self.client.trades.list(
             market=self.ticker,
         )
