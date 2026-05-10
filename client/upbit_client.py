@@ -20,14 +20,16 @@ class UpbitClient(AutoTrade):
         print(self.algorythm)
         print(self.ticker)
 
-    def is_start(self, is_regular: bool = True):
+    def is_start(self):
         now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
         ny = now_kst.astimezone(ZoneInfo("America/New_York"))
-        if is_regular:
-            if ny.weekday() >= 5:  # Sat/Sun
-                return False
+        # if ny.weekday() >= 5:  # Sat/Sun
+        #     return False
         # shlee todo 시간 설정 수정
         return TimeClass(9, 40) <= ny.timetz() < TimeClass(16, 0)
+
+    def start_trade(self):
+        pass
 
     ############# abstractmethod #############
     def get_cut_losses(self, high, low):

@@ -28,6 +28,7 @@ def main():
         sys.exit(1)
 
     obj = make_object(args.platform, args.no)
+    obj.start_trade()
 
 if __name__ == "__main__":
     main()

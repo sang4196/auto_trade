@@ -35,7 +35,11 @@ class AutoTrade(metaclass=ABCMeta):
         self.algorythm: dict = self.config["algorythm"][self.algo_no]
 
     @abstractmethod
-    def is_start(self, is_regular: bool = True):
+    def start_trade(self):
+        pass
+
+    @abstractmethod
+    def is_start(self):
         pass
 
     @abstractmethod
