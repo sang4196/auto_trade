@@ -235,12 +235,22 @@ def setup_logging(
                 "filters": ["context"],
                 "stream": "ext://sys.stdout",
             },
-            "file": {
+            "json_file": {
                 "class": "logging.handlers.RotatingFileHandler",
                 "level": normalized_level,
                 "formatter": "json",
                 "filters": ["context"],
                 "filename": str(log_path / f"{app_name}.log"),
+                "maxBytes": max_bytes,
+                "backupCount": backup_count,
+                "encoding": "utf-8",
+            },
+            "text_file": {
+                "class": "logging.handlers.RotatingFileHandler",
+                "level": normalized_level,
+                "formatter": "console",
+                "filters": ["context"],
+                "filename": str(log_path / f"{app_name}.text.log"),
                 "maxBytes": max_bytes,
                 "backupCount": backup_count,
                 "encoding": "utf-8",
@@ -258,7 +268,7 @@ def setup_logging(
         },
         "root": {
             "level": normalized_level,
-            "handlers": ["console", "file", "error_file"],
+            "handlers": ["console", "json_file", "text_file", "error_file"],
         },
         "loggers": {
             "urllib3": {
