@@ -2,7 +2,8 @@ import json
 from abc import *
 from pathlib import Path
 from typing import Optional
-
+from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 
 from common.logging.app_logging import setup_logging, get_logger, set_log_context
 
@@ -40,6 +41,11 @@ class AutoTrade(metaclass=ABCMeta):
         self.algorythm: dict = self.config["algorythm"][self.algo_no]
         self.access_key = self.config["access_key"]
         self.secret_key = self.config["secret_key"]
+
+    def is_dst(self):
+        now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
+        now_ny = now_kst.astimezone(ZoneInfo("America/New_York"))
+        return now_ny.dst() != timedelta(0)
 
     @abstractmethod
     def start_trade(self) -> None:

@@ -26,15 +26,6 @@ class UpbitClient(AutoTrade):
         self.logger.info(f"UpbitClient ticker: {self.ticker}")
 
     def is_start(self):
-        # now_kst = datetime.now(ZoneInfo("Asia/Seoul"))
-        # ny = now_kst.astimezone(ZoneInfo("America/New_York"))
-        # # if ny.weekday() >= 5:  # Sat/Sun
-        # #     return False
-        # # shlee todo 시간 설정 수정
-        # s = TimeClass(9, 40) <= ny.timetz() < TimeClass(16, 0)
-        # if not s:
-        #     self.logger.info("waiing for trading time..")
-        # return s
         return True
 
     def start_trade(self):
@@ -142,8 +133,10 @@ class UpbitClient(AutoTrade):
         candle_type = self.get_candle_type()
         candle_count = self.get_candle_count()
         candle_unit = self.get_candle_unit()
-        target_hour = int(self.algorythm["time_korea"].split(":")[0])
-        target_min = int(self.algorythm["time_korea"].split(":")[1])
+        target_hour, target_min = map(int, self.algorythm["target_time"].split(":"))
+        if self.is_dst():
+            target_hour -= 1
+
         while True:
             # 해당 분봉 만큼 retry
             # ex) unit = 5. 5분봉 최대 retry횟수 5.

@@ -5,8 +5,7 @@
     "1": {
       "algorythm_type": "AT_AL_1",
       "ticker": "KRW-BTC",
-      "time_usa": "9:35",
-      "time_korea": "22:35",
+      "target_time": "23:35",
       "candle_type": "m",
       "candle_count": 2,
       "candle_unit": 5,
@@ -15,8 +14,7 @@
     "2": {
       "algorythm_type": "AT_AL_1",
       "ticker": "KRW-BTC",
-      "time_usa": "14:10",
-      "time_korea": "3:10",
+      "target_time": "4:10",
       "candle_type": "m",
       "candle_count": 2,
       "candle_unit": 5
