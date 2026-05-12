@@ -152,7 +152,7 @@ class Algorithm1:
                 cnt = 0
 
             # 설정된 시간내에 매수시점 못 잡을 시 거래 종료(기본 60분)
-            trade_duration_min = self.o.algorythm.get("trade_duration_min", 60)
+            trade_duration_min = int(self.o.algorythm.get("trade_duration_min", "60"))
             if self.last_trade_time + timedelta(minutes=trade_duration_min) < datetime.now():
                 return -1
         return current_price

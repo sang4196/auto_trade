@@ -43,7 +43,7 @@ class UpbitClient(AutoTrade):
         return (high + low) / 2
 
     def get_lock_gains(self, high, low):
-        return high + (self.get_cut_losses(high, low) - high) * 2
+        return high + (high - self.get_cut_losses(high, low)) * 2
 
     def _get_tickers(self):
         pass
@@ -200,9 +200,9 @@ class UpbitClient(AutoTrade):
                 # 1시간마다 로깅
                 if retry_cnt > 60:
                     retry_cnt = 0
-                    self.logger.info(f"가격 레벨 세팅 진행중..서머타임:{self.is_dst()}")
-                    self.logger.info(f"현재 캔들={current_candle_hour}:{current_candle_min}")
-                    self.logger.info(f"타겟 캔들={target_hour}:{target_min}")
+                    self.logger.info(f"가격 레벨 세팅 진행중..서머타임:{self.is_dst()}. "
+                                     f"현재 캔들={current_candle_hour}:{current_candle_min}, "
+                                     f"타겟 캔들={target_hour}:{target_min}")
 
                 # retry interval 60sec
                 time.sleep(60)
