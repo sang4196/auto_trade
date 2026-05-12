@@ -64,9 +64,10 @@ class Algorithm1:
 
     def trade(self):
         # 가격 세팅
+        self.logger.info("가격 레벨 세팅 시작.")
         price_levels = self.o.get_price_levels_by_minute()
-        if not price_levels:
-            self.logger.info("가격 세팅 실패. 거래 종료.")
+        if not price_levels or len(price_levels) < 2:
+            self.logger.info("가격 레벨 세팅 실패. 거래 종료.")
             return
         self.high_price = price_levels[0]
         self.low_price = price_levels[1]
@@ -128,14 +129,14 @@ class Algorithm1:
             current_price = self.o._get_current_price()
 
             cnt += 1
-            # 300번에 한번씩 로깅
+            # 5분마다 한번씩 로깅
             if cnt >= 300:
-                self.logger.info(f"현재가 : {current_price}")
+                self.logger.info(f"매수시점 잡는중..현재가 : {current_price}")
                 cnt = 0
 
             # 설정된 시간내에 매수시점 못 잡을 시 거래 종료(기본 60분)
             trade_duration_min = self.o.algorythm.get("trade_duration_min", 60)
-            if self.last_trade_time + timedelta(hours=3) < datetime.now():
+            if self.last_trade_time + timedelta(minutes=trade_duration_min) < datetime.now():
                 return -1
         return current_price
 

@@ -127,9 +127,6 @@ class UpbitClient(AutoTrade):
     ########################################
 
     def get_price_levels_by_minute(self) -> Optional[list]:
-        """
-        """
-        retry_cnt = 0
         candle_type = self.get_candle_type()
         candle_count = self.get_candle_count()
         candle_unit = self.get_candle_unit()
@@ -137,19 +134,26 @@ class UpbitClient(AutoTrade):
         if self.is_dst():
             target_hour -= 1
 
+        retry_cnt = 0
         while True:
-            # 해당 분봉 만큼 retry
-            # ex) unit = 5. 5분봉 최대 retry횟수 5.
-            if retry_cnt > candle_unit:
-                return None
             candle = self._get_candle(self.ticker, candle_type, candle_count, candle_unit)
             # 캔들이 완성된 걸 가져옴.
             # 인덱스0 - 캔들 생성중, 1 - 완성된 캔들의 최신
             target = candle[1]
-            if (datetime.fromisoformat(target.candle_date_time_kst).hour != target_hour and
-                    datetime.fromisoformat(target.candle_date_time_kst).minute != target_min):
+            current_candle_hour = datetime.fromisoformat(target.candle_date_time_kst).hour
+            current_candle_min = datetime.fromisoformat(target.candle_date_time_kst).minute
+            if (current_candle_hour != target_hour and
+                    current_candle_min != target_min):
                 # retry interval 60sec
                 time.sleep(60)
+
+                retry_cnt += 1
+                # 1시간마다 로깅
+                if retry_cnt > 60:
+                    retry_cnt = 0
+                    self.logger.info(f"가격 레벨 세팅 진행중..서머타임:{self.is_dst()}")
+                    self.logger.info(f"현재 캔들={current_candle_hour}:{current_candle_min}")
+                    self.logger.info(f"타겟 캔들={target_hour}:{target_min}")
                 continue
 
             return [float(target.high_price), float(target.low_price)]
