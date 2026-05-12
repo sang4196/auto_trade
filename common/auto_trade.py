@@ -2,7 +2,7 @@ import json
 from abc import *
 from pathlib import Path
 from typing import Optional
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from common.logging.app_logging import setup_logging, get_logger, set_log_context
@@ -24,7 +24,7 @@ class AutoTrade(metaclass=ABCMeta):
         self.load_config()
         self.logger = self.get_logger()
 
-        self.logger.info(f"AutoTrade init {self.platform} {self.algo_no} succeed.")
+        self.logger.info(f"AutoTrade initialize. platform: {self.platform} algorythm: {self.algo_no}")
 
     def get_logger(self):
         setup_logging(
@@ -96,6 +96,14 @@ class AutoTrade(metaclass=ABCMeta):
 
     # wallet API
     @abstractmethod
+    def _get_signed_price(self, order_id: str):
+        pass
+
+    @abstractmethod
+    def _is_order_complete(self, order_id: str):
+        pass
+
+    @abstractmethod
     def _get_balance(self, currency: str):
         pass
 
@@ -105,22 +113,22 @@ class AutoTrade(metaclass=ABCMeta):
 
     # order API
     @abstractmethod
-    def _buy_limit(self, ticker: str, side: str, price: int, qty: int):
+    def _buy_limit(self, price: float, qty: float):
         pass
 
     @abstractmethod
-    def _buy_price(self, price: str):
+    def _buy_market(self, price: str):
         """
         시장가
         """
         pass
 
     @abstractmethod
-    def _sell_limit(self, ticker: str, side: str, price: int, qty: int):
+    def _sell_limit(self, price: float, qty: float):
         pass
 
     @abstractmethod
-    def _sell_price(self, price: str):
+    def _sell_market(self, qty: float):
         """
         시장가
         """

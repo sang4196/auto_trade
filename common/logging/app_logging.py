@@ -240,7 +240,7 @@ def setup_logging(
                 "level": normalized_level,
                 "formatter": "json",
                 "filters": ["context"],
-                "filename": str(log_path / f"{app_name}.log"),
+                "filename": str(log_path / f"{app_name}.json"),
                 "maxBytes": max_bytes,
                 "backupCount": backup_count,
                 "encoding": "utf-8",
@@ -250,7 +250,7 @@ def setup_logging(
                 "level": normalized_level,
                 "formatter": "console",
                 "filters": ["context"],
-                "filename": str(log_path / f"{app_name}.text.log"),
+                "filename": str(log_path / f"{app_name}.log"),
                 "maxBytes": max_bytes,
                 "backupCount": backup_count,
                 "encoding": "utf-8",
@@ -276,6 +276,14 @@ def setup_logging(
                 "propagate": True,
             },
             "requests": {
+                "level": "WARNING",
+                "propagate": True,
+            },
+            "httpx": {
+                "level": "WARNING",
+                "propagate": True,
+            },
+            "httpcore": {
                 "level": "WARNING",
                 "propagate": True,
             },

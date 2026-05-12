@@ -1,10 +1,7 @@
 import time
-from typing import Literal, Optional
+from typing import Optional
 from datetime import datetime
-from datetime import time as TimeClass
-from zoneinfo import ZoneInfo
 from upbit import Upbit
-from upbit.types import ticker
 
 from common.order_algorithm.order_algorithm import OrderAlgorithm
 from common.registry.registry import register
@@ -22,7 +19,7 @@ class UpbitClient(AutoTrade):
         self.quote_currency = self.ticker.split("-")[0]
         self.trade_currency = self.ticker.split("-")[1]
 
-        self.logger.info(f"UpbitClient init {self.platform} {self.algo_no} succeed.")
+        self.logger.info(f"UpbitClient initialize.")
         self.logger.info(f"UpbitClient ticker: {self.ticker}")
 
     def is_start(self):
@@ -70,6 +67,40 @@ class UpbitClient(AutoTrade):
             )
             return result
 
+    def _get_order(self, order_id: str):
+        return self.client.orders.retrieve(
+            uuid=order_id,
+        )
+
+    def _get_signed_price(self, order_id: str):
+        rtn = 0
+        result = self._get_order(order_id)
+
+        if not result:
+            return rtn
+
+        trades_count = int(result.trades_count)
+        if trades_count > 0:
+            rtn = float(result.trades[0].price or "0")
+
+        if trades_count > 1:
+            self.logger.warning(f"trades_count > 1. {trades_count}")
+
+        return rtn
+
+    def _is_order_complete(self, order_id: str):
+        rtn = False
+        result = self._get_order(order_id)
+
+        if result:
+            rtn = result.state in {"done", "cancel"}
+        # state
+        # wait: 체결 대기
+        # watch: 예약 주문 대기
+        # done: 체결 완료
+        # cancel: 주문 취소
+        return rtn
+
     def _get_balance(self, currency: str):
         rtn = 0
         result = self.client.accounts.list()
@@ -79,6 +110,7 @@ class UpbitClient(AutoTrade):
         for account in result:
             if account.currency == currency:
                 rtn = float(account.balance)
+                break
         return rtn
 
     def _get_agv_price(self, currency: str):
@@ -92,10 +124,20 @@ class UpbitClient(AutoTrade):
                 rtn = float(account.avg_buy_price)
         return rtn
 
-    def _buy_limit(self, ticker: str, side: str, price: int, qty: int):
-        pass
+    def _buy_limit(self, price: float, qty: float):
+        rtn = None
+        result = self.client.orders.create(
+            market=self.ticker,
+            side="bid",
+            volume=str(qty),
+            price=str(price),
+            ord_type="limit",
+        )
+        if result:
+            rtn = result.uuid
+        return rtn
 
-    def _buy_price(self, balance: str):
+    def _buy_market(self, balance: str):
         rtn = None
         result = self.client.orders.create(
             market=self.ticker,
@@ -107,16 +149,26 @@ class UpbitClient(AutoTrade):
             rtn = result.uuid
         return rtn
 
-    def _sell_limit(self, ticker: str, side: str, price: int, qty: int):
-        pass
-
-    def _sell_price(self, balance: str):
+    def _sell_limit(self, price: float, qty: float):
         rtn = None
         result = self.client.orders.create(
             market=self.ticker,
             side="ask",
-            price=balance,
-            ord_type="price",
+            volume=str(qty),
+            price=str(price),
+            ord_type="limit",
+        )
+        if result:
+            rtn = result.uuid
+        return rtn
+
+    def _sell_market(self, qty: float):
+        rtn = None
+        result = self.client.orders.create(
+            market=self.ticker,
+            side="ask",
+            volume=str(qty),
+            ord_type="market",
         )
         if result:
             rtn = result.uuid
@@ -142,11 +194,8 @@ class UpbitClient(AutoTrade):
             target = candle[1]
             current_candle_hour = datetime.fromisoformat(target.candle_date_time_kst).hour
             current_candle_min = datetime.fromisoformat(target.candle_date_time_kst).minute
-            if (current_candle_hour != target_hour and
+            if (current_candle_hour != target_hour or
                     current_candle_min != target_min):
-                # retry interval 60sec
-                time.sleep(60)
-
                 retry_cnt += 1
                 # 1시간마다 로깅
                 if retry_cnt > 60:
@@ -154,6 +203,12 @@ class UpbitClient(AutoTrade):
                     self.logger.info(f"가격 레벨 세팅 진행중..서머타임:{self.is_dst()}")
                     self.logger.info(f"현재 캔들={current_candle_hour}:{current_candle_min}")
                     self.logger.info(f"타겟 캔들={target_hour}:{target_min}")
+
+                # retry interval 60sec
+                time.sleep(60)
                 continue
 
             return [float(target.high_price), float(target.low_price)]
+
+if __name__ == "__main__":
+    print("test")

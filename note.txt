@@ -77,3 +77,11 @@ print(type(result))
 # Order(created_at='2026-05-06T21:32:53+09:00', executed_volume='0', locked='36464.223', market='KRW-BTC', ord_type='price', paid_fee='0', prevented_locked='0', prevented_volume=None, remaining_fee='18.223', remaining_volume=None, reserved_fee='18.223', side='bid', state='wait', trades_count=0, uuid='414f8c7a-2739-4495-aec9-c6ff19829891', identifier=None, price='36446', smp_type=None, time_in_force=None, trades=None, volume=None)
 print(result)
 print(result.uuid)
+
+
+############### 주문내역
+result = client.orders.retrieve(
+    uuid=uuid,
+)
+#Order(created_at='2026-05-12T21:16:37+09:00', executed_volume='0.00025086', locked='0.15439716', market='KRW-BTC', ord_type='price', paid_fee='14.99992284', prevented_locked='0', prevented_volume=None, remaining_fee='0.00007716', remaining_volume=None, reserved_fee='15', side='bid', state='cancel', trades_count=1, uuid='74c051f0-d37f-44e7-a644-f968a7f4e141', identifier=None, price='30000', smp_type=None, time_in_force=None, trades=[Trade(created_at='2026-05-12T21:16:37+09:00', funds='29999.84568', market='KRW-BTC', price='119588000', side='bid', trend='up', uuid='', volume='0.00025086')], volume=None)
+print(result)

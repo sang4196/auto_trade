@@ -62,6 +62,21 @@ class Algorithm1:
 
             time.sleep(60)
 
+    def set_price_levels(self, high: float, low: float):
+        self.high_price = high
+        self.low_price = low
+        self.cut_losses = self.o.get_cut_losses(self.high_price, self.low_price)
+        self.take_profit = self.o.get_lock_gains(self.high_price, self.low_price)
+        self.logger.info(f"high_price: {self.high_price}, low_price: {self.low_price}")
+        self.logger.info(f"cut_losses: {self.cut_losses}, take_profit: {self.take_profit}")
+
+    def check_signed(self, uuid: str):
+        time.sleep(1)
+        while not self.o._is_order_complete(uuid):
+            self.logger.info("체결 대기중..")
+            time.sleep(1)
+        self.logger.info("체결 완료.")
+
     def trade(self):
         # 가격 세팅
         self.logger.info("가격 레벨 세팅 시작.")
@@ -69,12 +84,8 @@ class Algorithm1:
         if not price_levels or len(price_levels) < 2:
             self.logger.info("가격 레벨 세팅 실패. 거래 종료.")
             return
-        self.high_price = price_levels[0]
-        self.low_price = price_levels[1]
-        self.cut_losses = self.o.get_cut_losses(self.high_price, self.low_price)
-        self.take_profit = self.o.get_lock_gains(self.high_price, self.low_price)
-        self.logger.info(f"high_price: {self.high_price}, low_price: {self.low_price}")
-        self.logger.info(f"cut_losses: {self.cut_losses}, take_profit: {self.take_profit}")
+
+        self.set_price_levels(price_levels[0], price_levels[1])
 
         # 매수시점 조회
         current_price = self._poll_price_until_high(self.high_price)
@@ -98,25 +109,31 @@ class Algorithm1:
             return
 
         # 시장가 매수 요청
-        bid_uuid = self.o._buy_price(str(available_balance))
+        bid_uuid = self.o._buy_market(str(available_balance))
         self.logger.info(f"매수요청 - {bid_uuid}")
 
         # 매수 확인
-        # shlee todo 매수 얼마에 체결되었는지도 확인
-        # if not self._ensure_buy_or_retry(bid_uuid):
-        #     return
-        # shlee todo 매수 확인 후 체크하도록.
-        # agv_buy_price = self.o._get_agv_price(self.o.trade_currency)
-        agv_buy_price = 0
-        self.logger.info(f"{self.o.trade_currency} 매수 평단가: {agv_buy_price}")
+        self.check_signed(bid_uuid)
+
+        # 매수 가격 확인
+        signed_price = self.o._get_signed_price(bid_uuid)
+        self.logger.info(f"{self.o.trade_currency} 매수 가격: {signed_price}")
+        if self.high_price < signed_price:
+            self.logger.info("매수 가격이 기존 고가가격보다 높습니다. 가격 레벨을 조정합니다.")
+            self.high_price = signed_price
+            self.set_price_levels(self.high_price, self.low_price)
 
         # 잔고조회
         btc_balance = self.o._get_balance(self.o.trade_currency)
 
         # 시장가 매도
-        ask_uuid = self.o._sell_price(str(btc_balance))
+        ask_uuid = self.o._sell_market(btc_balance)
         self.logger.info(f"매도요청 - {ask_uuid}")
-        # shlee todo 여기서 실제 매도 금액을 가져오면 좋을듯. 매수확인과 같은 함수쓰면될듯
+        # 매도 확인
+        self.check_signed(bid_uuid)
+        # 매도 가격 확인
+        signed_price = self.o._get_signed_price(ask_uuid)
+        self.logger.info(f"{self.o.trade_currency} 매수 가격: {signed_price}")
 
     def _poll_price_until_high(self, high: float) -> float:
         """
@@ -150,11 +167,11 @@ class Algorithm1:
             current_price = self.o._get_current_price()
 
             if current_price >= self.take_profit:
-                self.o._sell_price(str(current_price))
+                self.o._sell_market(current_price)
                 self.win += 1
                 break
             elif current_price <= self.cut_losses:
-                self.o._sell_price(str(current_price))
+                self.o._sell_market(current_price)
                 self.lose += 1
                 break
 
