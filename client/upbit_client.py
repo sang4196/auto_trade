@@ -187,6 +187,10 @@ class UpbitClient(AutoTrade):
             target_hour -= 1
 
         retry_cnt = 0
+        # retry interval 60sec
+        sleep_interval = 60
+        # 1시간마다 로깅
+        logging_interval = sleep_interval * 60
         while True:
             candle = self._get_candle(self.ticker, candle_type, candle_count, candle_unit)
             # 캔들이 완성된 걸 가져옴.
@@ -197,15 +201,14 @@ class UpbitClient(AutoTrade):
             if (current_candle_hour != target_hour or
                     current_candle_min != target_min):
                 retry_cnt += 1
-                # 1시간마다 로깅
-                if retry_cnt > 60:
+
+                if retry_cnt > logging_interval:
                     retry_cnt = 0
                     self.logger.info(f"가격 레벨 세팅 진행중..서머타임:{self.is_dst()}. "
                                      f"현재 캔들={current_candle_hour}:{current_candle_min}, "
                                      f"타겟 캔들={target_hour}:{target_min}")
 
-                # retry interval 60sec
-                time.sleep(60)
+                time.sleep(sleep_interval)
                 continue
 
             return [float(target.high_price), float(target.low_price)]

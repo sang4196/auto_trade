@@ -18,7 +18,9 @@ class AutoTrade(metaclass=ABCMeta):
         self.secret_key: Optional[str] = None
         self.algorythm: Optional[dict] = None
 
+        # 거래 통화
         self.quote_currency: str = ""
+        # 거래 타겟
         self.trade_currency: str = ""
 
         self.load_config()
