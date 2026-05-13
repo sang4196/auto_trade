@@ -80,11 +80,16 @@ class UpbitClient(AutoTrade):
             return rtn
 
         trades_count = int(result.trades_count)
-        if trades_count > 0:
-            rtn = float(result.trades[0].price or "0")
+        if trades_count <= 0:
+            return rtn
 
-        if trades_count > 1:
-            self.logger.warning(f"trades_count > 1. {trades_count}")
+        funds = 0
+        volumes = 0
+        for idx in range(trades_count):
+            volumes += float(result.trades[idx].volume or "0")
+            funds += float(result.trades[idx].funds or "0")
+
+        rtn = round(funds / volumes)
 
         return rtn
 
