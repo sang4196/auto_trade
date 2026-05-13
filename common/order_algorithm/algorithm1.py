@@ -44,7 +44,7 @@ class Algorithm1:
         sleep_interval = 60
         while True:
             # 하루 한번만 거래
-            if self.last_trade_time.date() <= datetime.now().date() and self.o.is_start():
+            if self.last_trade_time.date() < datetime.now().date() and self.o.is_start():
 
                 self.logger.info(f"{self.o.platform} Algorithm1 거래 시작.")
                 self.trade()
@@ -90,6 +90,8 @@ class Algorithm1:
         self.last_trade_time = datetime.now()
 
         # 매수시점 조회
+        trade_duration_min = self.o.algorythm.get('trade_duration_min', 60)
+        self.logger.info(f"{self.last_trade_time} 기준 {trade_duration_min}분 동안 매수 시점 검색.")
         current_price = self._poll_price_until_high(self.high_price)
         if current_price == -1:
             self.logger.info("매수시점 조회 실패. 거래 종료.")
@@ -173,7 +175,7 @@ class Algorithm1:
         retry_cnt = 0
         sleep_interval = 0.1
         # 5분마다 로깅
-        logging_interval = (sleep_interval * 10 * 60) * 5
+        logging_interval = ((sleep_interval * 10) * 10 * 60) * 5
         while True:
             current_price = self.o._get_current_price()
 
