@@ -15,7 +15,7 @@ class Config:
     candle_type: str
     candle_count: int
     candle_unit: int
-    trade_duration_min: int
+    trade_duration_min: int = 60
 
     @classmethod
     def from_json(cls, data: Optional[dict]) -> Optional["Config"]:
